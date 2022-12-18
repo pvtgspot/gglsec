@@ -29,17 +29,11 @@ func NewGroupBranchProtectionRule(gid string, client *gitlab.Client) *GroupBranc
 
 func (bpc *GroupBranchProtectionRule) Apply() *gglsec.RuleResult {
 	const (
-		resultNoMessage          string = "No message"
 		resultWrongProtection    string = "Default branch protection is set to \"%s\""
 		resultRequiredProtection string = "Default branch protection is set to \"%s\" not \"%s\""
 	)
 
-	result := &gglsec.RuleResult{
-		Meta:    bpc.Meta,
-		Status:  false,
-		Message: resultNoMessage,
-	}
-
+	result := gglsec.NewRuleResult(bpc.Meta)
 	cache := gglsec.GetGitlabGroupRequestsCache()
 
 	group, err := getGroup(bpc.EntityId, bpc.GitlabClient, cache)

@@ -27,17 +27,11 @@ func NewVisibilityLevelRule(gid string, client *gitlab.Client) *VisibilityLevelR
 
 func (vlr *VisibilityLevelRule) Apply() *gglsec.RuleResult {
 	const (
-		resultNoMessage     string = "No message"
 		resultWrongLevel    string = "Group visibility is \"%s\", but it should be \"%s\""
 		resultRequiredLevel string = "Group visibility is \"%s\""
 	)
 
-	result := &gglsec.RuleResult{
-		Meta:    vlr.Meta,
-		Status:  false,
-		Message: resultNoMessage,
-	}
-
+	result := gglsec.NewRuleResult(vlr.Meta)
 	cache := gglsec.GetGitlabGroupRequestsCache()
 
 	group, err := getGroup(vlr.EntityId, vlr.GitlabClient, cache)

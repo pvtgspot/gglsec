@@ -47,6 +47,14 @@ type RuleResult struct {
 	Message string
 }
 
+func NewRuleResult(meta *RuleMeta) *RuleResult {
+	return &RuleResult{
+		Meta:    meta,
+		Status:  false,
+		Message: "No message",
+	}
+}
+
 func (rr *RuleResult) Sprint() string {
 	return fmt.Sprint(rr.Meta.Name, " ", rr.Status, " ", rr.Message)
 }
