@@ -4,33 +4,44 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/xanzy/go-gitlab"
 )
 
 const (
-	STATUS_OK     = "OK"
-	STATUS_FAILED = "FAILED"
+	STATUS_OK     string = "OK"
+	STATUS_FAILED string = "FAILED"
 
-	SEVERITY_INFO     = "INFO"
-	SEVERITY_WARNING  = "WARNING"
-	SEVERITY_HIGH     = "HIGH"
-	SEVERITY_CRITICAL = "CRITICAL"
+	SEVERITY_INFO     Severity = "INFO"
+	SEVERITY_WARNING  Severity = "WARNING"
+	SEVERITY_HIGH     Severity = "HIGH"
+	SEVERITY_CRITICAL Severity = "CRITICAL"
+
+	ENTITY_TYPE_GROUP    EnityType = "GROUP"
+	ENTITY_TYPE_PROJECTS EnityType = "PROJECT"
 )
 
 type Rule interface {
 	Apply() *RuleResult
 }
 
+type Status string
+
+type Severity string
+
+type EnityType string
+
 type RuleMeta struct {
 	Name        string
 	Description string
-	Severity    string
+	Severity    Severity
+	EntityId    string
+	EntityType  EnityType
 }
 
 type RuleMixin struct {
-	EntityId     string
 	Meta         *RuleMeta
 	GitlabClient *gitlab.Client
 }
@@ -112,15 +123,32 @@ func (rrs *RuleResults) Append(result *RuleResult) {
 }
 
 func (rrs *RuleResults) PrintReport() {
-	const OVERALL_STATUS_MESSAGE = "\n***OVERALL STATUS***\n\nSUCCESS: %d\nFAILED: %d\nSUCCESS PERCENT: %.f\n"
+	const OVERALL_STATUS_MESSAGE = "***OVERALL STATUS***\n\nSUCCESS: %d\nFAILED: %d\nSUCCESS PERCENT: %.f\n"
 
 	tableWriter := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', tabwriter.TabIndent)
 
-	for _, res := range rrs.ruleResults {
-		res.Fprintln(tableWriter)
+	type sortedResultsKey struct {
+		eid   string
+		etype EnityType
 	}
 
-	tableWriter.Flush()
+	sortedResults := make(map[sortedResultsKey][]*RuleResult)
+	for _, res := range rrs.ruleResults {
+		key := sortedResultsKey{
+			res.Meta.EntityId,
+			res.Meta.EntityType,
+		}
+		sortedResults[key] = append(sortedResults[key], res)
+	}
+
+	for key, results := range sortedResults {
+		fmt.Printf("Scan for %s with ID %s\n", strings.ToLower(string(key.etype)), key.eid)
+		for _, res := range results {
+			res.Fprintln(tableWriter)
+		}
+		tableWriter.Flush()
+		fmt.Println()
+	}
 
 	fmt.Printf(OVERALL_STATUS_MESSAGE, rrs.success, rrs.failed, rrs.SuccessOverall())
 }

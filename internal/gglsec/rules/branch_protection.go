@@ -16,11 +16,12 @@ type GroupBranchProtectionRule struct {
 func NewGroupBranchProtectionRule(gid string, client *gitlab.Client) *GroupBranchProtectionRule {
 	return &GroupBranchProtectionRule{
 		&gglsec.RuleMixin{
-			EntityId: gid,
 			Meta: &gglsec.RuleMeta{
 				Name:        "GL1001",
 				Description: "Protection of the main branch in the group settings should be set to \"Fully protected\"",
 				Severity:    gglsec.SEVERITY_WARNING,
+				EntityId:    gid,
+				EntityType:  gglsec.ENTITY_TYPE_GROUP,
 			},
 			GitlabClient: client,
 		},
@@ -36,7 +37,7 @@ func (bpc *GroupBranchProtectionRule) Apply() *gglsec.RuleResult {
 	result := gglsec.NewRuleResult(bpc.Meta)
 	cache := gglsec.GetGitlabGroupRequestsCache()
 
-	group, err := getGroup(bpc.EntityId, bpc.GitlabClient, cache)
+	group, err := getGroup(bpc.Meta.EntityId, bpc.GitlabClient, cache)
 	if err != nil {
 		result.Message = err.Error()
 		return result

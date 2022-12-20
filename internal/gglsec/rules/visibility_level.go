@@ -14,11 +14,12 @@ type VisibilityLevelRule struct {
 func NewVisibilityLevelRule(gid string, client *gitlab.Client) *VisibilityLevelRule {
 	return &VisibilityLevelRule{
 		&gglsec.RuleMixin{
-			EntityId: gid,
 			Meta: &gglsec.RuleMeta{
 				Name:        "GL1002",
 				Description: "Group visibility should be \"Private\"",
 				Severity:    gglsec.SEVERITY_WARNING,
+				EntityId:    gid,
+				EntityType:  gglsec.ENTITY_TYPE_GROUP,
 			},
 			GitlabClient: client,
 		},
@@ -34,7 +35,7 @@ func (vlr *VisibilityLevelRule) Apply() *gglsec.RuleResult {
 	result := gglsec.NewRuleResult(vlr.Meta)
 	cache := gglsec.GetGitlabGroupRequestsCache()
 
-	group, err := getGroup(vlr.EntityId, vlr.GitlabClient, cache)
+	group, err := getGroup(vlr.Meta.EntityId, vlr.GitlabClient, cache)
 	if err != nil {
 		result.Message = err.Error()
 		return result

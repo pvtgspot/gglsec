@@ -12,11 +12,12 @@ type TwoFactorAuthRule struct {
 func NewTwoFactorAuthRule(gid string, client *gitlab.Client) *TwoFactorAuthRule {
 	return &TwoFactorAuthRule{
 		&gglsec.RuleMixin{
-			EntityId: gid,
 			Meta: &gglsec.RuleMeta{
 				Name:        "GL1003",
 				Description: "Two factor authentication must be enabled",
 				Severity:    gglsec.SEVERITY_WARNING,
+				EntityId:    gid,
+				EntityType:  gglsec.ENTITY_TYPE_GROUP,
 			},
 			GitlabClient: client,
 		},
@@ -32,7 +33,7 @@ func (tfa *TwoFactorAuthRule) Apply() *gglsec.RuleResult {
 	result := gglsec.NewRuleResult(tfa.Meta)
 	cache := gglsec.GetGitlabGroupRequestsCache()
 
-	group, err := getGroup(tfa.EntityId, tfa.GitlabClient, cache)
+	group, err := getGroup(tfa.Meta.EntityId, tfa.GitlabClient, cache)
 	if err != nil {
 		result.Message = err.Error()
 		return result
