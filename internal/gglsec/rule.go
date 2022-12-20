@@ -2,6 +2,9 @@ package gglsec
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"text/tabwriter"
 
 	"github.com/xanzy/go-gitlab"
 )
@@ -56,11 +59,15 @@ func NewRuleResult(meta *RuleMeta) *RuleResult {
 }
 
 func (rr *RuleResult) Sprint() string {
-	return fmt.Sprint(rr.Meta.Name, " ", rr.Status, " ", rr.Message)
+	return fmt.Sprint(rr.Meta.Name, "\t", rr.Meta.Severity, "\t", rr.Status, "\t", rr.Message)
 }
 
 func (rr *RuleResult) Println() {
 	fmt.Println(rr.Sprint())
+}
+
+func (rr *RuleResult) Fprintln(w io.Writer) {
+	fmt.Fprintln(w, rr.Sprint())
 }
 
 type RuleResults struct {
@@ -107,9 +114,13 @@ func (rrs *RuleResults) Append(result *RuleResult) {
 func (rrs *RuleResults) PrintReport() {
 	const OVERALL_STATUS_MESSAGE = "\n***OVERALL STATUS***\n\nSUCCESS: %d\nFAILED: %d\nSUCCESS PERCENT: %.f\n"
 
+	tableWriter := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', tabwriter.TabIndent)
+
 	for _, res := range rrs.ruleResults {
-		res.Println()
+		res.Fprintln(tableWriter)
 	}
+
+	tableWriter.Flush()
 
 	fmt.Printf(OVERALL_STATUS_MESSAGE, rrs.success, rrs.failed, rrs.SuccessOverall())
 }
