@@ -49,6 +49,7 @@ and outputs a summary of the scan results to the console`,
 			rl.Append(
 				rules.NewGroupBranchProtectionRule(gid, gitlabClient),
 				rules.NewVisibilityLevelRule(gid, gitlabClient),
+				rules.NewTwoFactorAuthRule(gid, gitlabClient),
 			)
 		}
 
